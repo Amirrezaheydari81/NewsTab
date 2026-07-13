@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "نیوز تب",
+  "version": "1.0.0",
+  "description": "New tab صفحه‌ی مینیمال با فیدهای RSS دلخواه",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["https://*/*", "http://*/*"],
+  "icons": {
+    "256": "logo.png"
+  }
+}

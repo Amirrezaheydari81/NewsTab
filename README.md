@@ -1,5 +1,7 @@
 # نیوز تب
 
+![cover](cover.jpg)
+
 افزایش کروم صفحه تب جدید را با فیدهای RSS دلخواه شما به یک مرکز خبری شخصی‌سازی شده تبدیل می‌کند.
 
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue)

@@ -11,10 +11,7 @@ const DEFAULT_FEEDS = [
   { id: "jetbrains-blog", name: "JetBrains Blog", url: "https://blog.jetbrains.com/feed" },
   { id: "martin-fowler", name: "Martin Fowler", url: "https://martinfowler.com/feed.atom" },
   { id: "netflix-techblog-medium", name: "Netflix TechBlog - Medium", url: "https://netflixtechblog.com/feed" },
-  { id: "software-engineering-daily-podcast", name: "Software Engineering Daily Podcast", url: "https://softwareengineeringdaily.com/category/podcast/feed" },
-  { id: "programming-throwdown", name: "Programming Throwdown", url: "http://feeds.feedburner.com/ProgrammingThrowdown" },
   { id: "software-defined-talk", name: "Software Defined Talk", url: "https://feeds.fireside.fm/sdt/rss" },
-  { id: "software-engineering-radio", name: "Software Engineering Radio", url: "http://feeds.feedburner.com/se-radio" },
   { id: "stack-abuse", name: "Stack Abuse", url: "https://stackabuse.com/rss/" },
   { id: "stack-overflow-blog", name: "Stack Overflow Blog", url: "https://stackoverflow.blog/feed/" },
   { id: "the-airbnb-tech-blog-medium", name: "The Airbnb Tech Blog - Medium", url: "https://medium.com/feed/airbnb-engineering" },
@@ -23,7 +20,6 @@ const DEFAULT_FEEDS = [
   { id: "the-stack-overflow-podcast", name: "The Stack Overflow Podcast", url: "https://feeds.simplecast.com/XA_851k3" },
   { id: "hackaday", name: "Hackaday", url: "https://hackaday.com/blog/feed/" },
   { id: "ikea-hackers", name: "IKEA Hackers", url: "https://www.ikeahackers.net/feed" },
-  { id: "hacker-news-frontpage", name: "Hacker News (Front Page)", url: "https://hnrss.org/frontpage" },
   { id: "hacker-news", name: "Hacker News", url: "https://news.ycombinator.com/rss" },
 ];
 
@@ -46,6 +42,12 @@ const lowPowerBtn = document.getElementById("lowPowerBtn");
 const sortBtn = document.getElementById("sortBtn");
 const searchInput = document.getElementById("searchInput");
 const lastUpdatedEl = document.getElementById("lastUpdated");
+const menuBtn = document.getElementById("menuBtn");
+const menuVertical = document.getElementById("menuVertical");
+const quotesBtn = document.getElementById("quotesBtn");
+const tickersBtn = document.getElementById("tickersBtn");
+const clearCacheBtn = document.getElementById("clearCacheBtn");
+const emergencyBtn = document.getElementById("emergencyBtn");
 
 let showFa = false;
 let translationCache = {};
@@ -57,6 +59,8 @@ let cardRefreshers = []; // [{feed, reload}]
 let lowPowerMode = false;
 let autoRefreshIntervalId = null;
 let sortBy = "none";
+let showQuotes = true;
+let showTickers = true;
 
 function uid() {
   return Math.random().toString(36).slice(2, 9);
@@ -76,8 +80,23 @@ let fetchWorkers = 0;
 const pendingFetches = new Map();
 
 function enqueueFetch(job) {
-  fetchQueue.push(job);
+  let resolve, reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  fetchQueue.push(async () => {
+    try {
+      await job();
+      resolve();
+    } catch (err) {
+      reject(err);
+    }
+  });
+
   pumpFetchQueue();
+  return promise;
 }
 function pumpFetchQueue() {
   while (fetchWorkers < FETCH_MAX_WORKERS && fetchQueue.length) {
@@ -105,7 +124,7 @@ function saveFeeds(feeds) {
 function loadAppState() {
   return new Promise((resolve) => {
     chrome.storage.local.get(
-      ["showFa", "translationCache", "readLinks", "feedCache", "groupsCollapsed", "lowPowerMode", "sortBy"],
+      ["showFa", "translationCache", "readLinks", "feedCache", "groupsCollapsed", "lowPowerMode", "sortBy", "showQuotes", "showTickers"],
       (res) => {
         showFa = res.showFa === undefined ? true : !!res.showFa;
         translationCache = res.translationCache || {};
@@ -115,6 +134,8 @@ function loadAppState() {
         lowPowerMode = !!res.lowPowerMode;
         applyLowPowerMode();
         sortBy = res.sortBy || "none";
+        showQuotes = res.showQuotes === undefined ? true : !!res.showQuotes;
+        showTickers = res.showTickers === undefined ? true : !!res.showTickers;
         resolve();
       }
     );
@@ -379,8 +400,44 @@ function sortFeeds(feeds) {
 function toggleSort() {
   sortBy = sortBy === "newest" ? "none" : "newest";
   sortBtn.classList.toggle("on", sortBy === "newest");
+  sortBtn.classList.toggle("active", sortBy === "newest");
   sortBtn.title = sortBy === "newest" ? "جدیدترین‌ها" : "مرتب‌سازی";
   chrome.storage.local.set({ sortBy });
+  renderAll();
+}
+
+function toggleQuotes() {
+  showQuotes = !showQuotes;
+  const quoteSection = document.getElementById("quoteSection");
+  if (quoteSection) {
+    quoteSection.style.display = showQuotes ? "" : "none";
+  }
+  quotesBtn.classList.toggle("on", showQuotes);
+  quotesBtn.classList.toggle("active", showQuotes);
+  chrome.storage.local.set({ showQuotes });
+}
+
+function toggleTickers() {
+  showTickers = !showTickers;
+  const tickerSection = document.getElementById("tickerSection");
+  if (tickerSection) {
+    tickerSection.style.display = showTickers ? "" : "none";
+  }
+  tickersBtn.classList.toggle("on", showTickers);
+  tickersBtn.classList.toggle("active", showTickers);
+  chrome.storage.local.set({ showTickers });
+}
+
+function toggleMenu() {
+  menuVertical.classList.toggle("open");
+}
+
+function clearCache() {
+  feedCache = {};
+  translationCache = {};
+  readLinks = new Set();
+  groupsCollapsed = {};
+  chrome.storage.local.set({ feedCache: {}, translationCache: {}, readLinks: [], groupsCollapsed: {} });
   renderAll();
 }
 
@@ -477,14 +534,22 @@ async function loadCardContent(feed, card, isBackground = false) {
         card.classList.remove("loading");
         card.classList.add("error");
         list.innerHTML = `<li class="feed-item">${errorMessage(err)}</li>`;
+        if (err && err.kind === "timeout") {
+          setTimeout(() => {
+            card.classList.remove("error");
+            card.classList.add("loading");
+            list.innerHTML = `<li class="feed-item">در حال تلاش مجدد...</li>`;
+            loadCardContent(feed, card);
+          }, 5000);
+        }
       }
     }
   };
 
   if (isBackground || cached) {
-    enqueueFetch(doFetch);
+    return enqueueFetch(doFetch);
   } else {
-    await doFetch();
+    return await doFetch();
   }
 }
 
@@ -503,7 +568,7 @@ function showCachedOnly(feed, card) {
     if (showFa) applyTranslations(list);
     card.style.display = "";
   } else {
-    list.innerHTML = `<li class="feed-item">برای نمایش داده، به‌روزرسانی کنید</li>`;
+    list.innerHTML = `<li class="feed-item">برای نمایش داده، از بخش تنظیمات روی به‌روزرسانی کلیک کنید</li>`;
   }
 }
 
@@ -701,6 +766,7 @@ grid.addEventListener("click", (e) => {
 translateBtn.addEventListener("click", () => {
   showFa = !showFa;
   translateBtn.classList.toggle("on", showFa);
+  translateBtn.classList.toggle("active", showFa);
   chrome.storage.local.set({ showFa });
   renderAll();
 });
@@ -710,6 +776,7 @@ refreshBtn.addEventListener("click", () => refreshAllCards());
 lowPowerBtn.addEventListener("click", () => {
   lowPowerMode = !lowPowerMode;
   lowPowerBtn.classList.toggle("on", lowPowerMode);
+  lowPowerBtn.classList.toggle("active", lowPowerMode);
   applyLowPowerMode();
   persistLowPowerMode();
   if (autoRefreshIntervalId) clearInterval(autoRefreshIntervalId);
@@ -719,6 +786,33 @@ lowPowerBtn.addEventListener("click", () => {
 
 sortBtn.addEventListener("click", toggleSort);
 
+menuBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleMenu();
+});
+
+emergencyBtn.addEventListener("click", () => {
+  clearCache();
+});
+
+quotesBtn.addEventListener("click", () => {
+  toggleQuotes();
+});
+
+tickersBtn.addEventListener("click", () => {
+  toggleTickers();
+});
+
+clearCacheBtn.addEventListener("click", () => {
+  clearCache();
+});
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".actions")) {
+    menuVertical.classList.remove("open");
+  }
+});
+
 /* ---------- init ---------- */
 
 async function init() {
@@ -726,11 +820,93 @@ async function init() {
   setInterval(updateClock, 30 * 1000);
   await loadAppState();
   translateBtn.classList.toggle("on", showFa);
+  translateBtn.classList.toggle("active", showFa);
   lowPowerBtn.classList.toggle("on", lowPowerMode);
+  lowPowerBtn.classList.toggle("active", lowPowerMode);
   sortBtn.classList.toggle("on", sortBy === "newest");
+  sortBtn.classList.toggle("active", sortBy === "newest");
   sortBtn.title = sortBy === "newest" ? "جدیدترین‌ها" : "مرتب‌سازی";
+  quotesBtn.classList.toggle("on", showQuotes);
+  quotesBtn.classList.toggle("active", showQuotes);
+
+  const quoteSection = document.getElementById("quoteSection");
+  if (quoteSection) {
+    quoteSection.style.display = showQuotes ? "" : "none";
+  }
+
+  tickersBtn.classList.toggle("on", showTickers);
+  tickersBtn.classList.toggle("active", showTickers);
+
+  const tickerSection = document.getElementById("tickerSection");
+  if (tickerSection) {
+    tickerSection.style.display = showTickers ? "" : "none";
+  }
 
   renderAll();
   autoRefreshIntervalId = setInterval(refreshAllCards, AUTO_REFRESH_MS);
 }
+
+if (typeof module !== "undefined" && module.exports) {
+  const state = {
+    get showFa() { return showFa; },
+    set showFa(v) { showFa = v; },
+    get sortBy() { return sortBy; },
+    set sortBy(v) { sortBy = v; },
+    get lowPowerMode() { return lowPowerMode; },
+    set lowPowerMode(v) { lowPowerMode = v; },
+    get showQuotes() { return showQuotes; },
+    set showQuotes(v) { showQuotes = v; },
+    get showTickers() { return showTickers; },
+    set showTickers(v) { showTickers = v; },
+    get feedCache() { return feedCache; },
+    set feedCache(v) { feedCache = v; },
+    get readLinks() { return readLinks; },
+    set readLinks(v) { readLinks = v; },
+    get translationCache() { return translationCache; },
+    set translationCache(v) { translationCache = v; },
+    get groupsCollapsed() { return groupsCollapsed; },
+    set groupsCollapsed(v) { groupsCollapsed = v; },
+    get FETCH_MAX_WORKERS() { return FETCH_MAX_WORKERS; },
+    set FETCH_MAX_WORKERS(v) { FETCH_MAX_WORKERS = v; },
+    get ITEMS_PER_FEED() { return ITEMS_PER_FEED; },
+    set ITEMS_PER_FEED(v) { ITEMS_PER_FEED = v; },
+    get CACHE_TTL_MS() { return CACHE_TTL_MS; },
+    set CACHE_TTL_MS(v) { CACHE_TTL_MS = v; },
+    get AUTO_REFRESH_MS() { return AUTO_REFRESH_MS; },
+    set AUTO_REFRESH_MS(v) { AUTO_REFRESH_MS = v; },
+    get TRANSLATE_MAX_WORKERS() { return TRANSLATE_MAX_WORKERS; },
+    set TRANSLATE_MAX_WORKERS(v) { TRANSLATE_MAX_WORKERS = v; },
+    get FETCH_TIMEOUT_MS() { return FETCH_TIMEOUT_MS; },
+    set FETCH_TIMEOUT_MS(v) { FETCH_TIMEOUT_MS = v; },
+  };
+
+  module.exports = {
+    uid,
+    escapeHtml,
+    timeAgo,
+    faviconFor,
+    sortItems,
+    sortFeeds,
+    feedLatestDate,
+    groupKeyOf,
+    itemsHtml,
+    wireItemClicks,
+    buildCard,
+    showCachedOnly,
+    errorMessage,
+    applyLowPowerMode,
+    toggleSort,
+    toggleQuotes,
+    toggleTickers,
+    toggleMenu,
+    clearCache,
+    persistLowPowerMode,
+    persistGroupsCollapsed,
+    persistReadLinks,
+    persistFeedCache,
+    persistTranslationCache,
+    state,
+  };
+}
+
 init();

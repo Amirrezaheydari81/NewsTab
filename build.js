@@ -16,20 +16,22 @@ function copyFile(src, dest) {
   fs.copyFileSync(src, dest);
 }
 
-function minifyJs() {
-  const input = path.join(ROOT, "app.js");
-  const output = path.join(DIST, "app.js");
-  const code = fs.readFileSync(input, "utf8");
-
-  minify(code, { compress: true, mangle: true })
-    .then((result) => {
+async function minifyJs() {
+  const files = ["app.js", "quotes.js", "tgju-v2.js"];
+  for (const file of files) {
+    const input = path.join(ROOT, file);
+    const output = path.join(DIST, file);
+    if (!fs.existsSync(input)) continue;
+    const code = fs.readFileSync(input, "utf8");
+    try {
+      const result = await minify(code, { compress: true, mangle: true });
       fs.writeFileSync(output, result.code);
       console.log(`Minified: ${output}`);
-    })
-    .catch((err) => {
-      console.error("Minification failed:", err);
+    } catch (err) {
+      console.error(`Minification failed for ${file}:`, err);
       process.exit(1);
-    });
+    }
+  }
 }
 
 function copyAssets() {
@@ -38,6 +40,8 @@ function copyAssets() {
     "style.css",
     "manifest.json",
     "logo.png",
+    "quotes.js",
+    "tgju-v2.js",
   ];
 
   assets.forEach((file) => {
@@ -56,10 +60,10 @@ function copyAssets() {
   }
 }
 
-function build() {
+async function build() {
   console.log("Building production bundle...");
   cleanDist();
-  minifyJs();
+  await minifyJs();
   copyAssets();
   console.log("Build complete.");
 }

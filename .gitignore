@@ -9,5 +9,8 @@ Thumbs.db
 *.swo
 *~
 .env
-.env.local
+.env*.local
 package-lock.json
+test.js
+coverage/
+.nyc_output/

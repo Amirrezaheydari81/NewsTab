@@ -1,12 +1,14 @@
 {
   "name": "news-tab",
-  "version": "1.0.0",
+  "version": "1.1.0.0",
   "description": "Minimal RSS new tab extension",
   "scripts": {
     "build": "node build.js",
-    "watch": "node build.js --watch"
+    "watch": "node build.js --watch",
+    "test": "node test.js"
   },
   "devDependencies": {
-    "terser": "^5.39.0"
+    "terser": "^5.39.0",
+    "jsdom": "^25.0.0"
   }
 }

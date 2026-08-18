@@ -23,7 +23,7 @@ const DEFAULT_FEEDS = [
   { id: "hacker-news", name: "Hacker News", url: "https://news.ycombinator.com/rss" },
 ];
 
-let ITEMS_PER_FEED = 5;
+let ITEMS_PER_FEED = 10;
 let AUTO_REFRESH_MS = 12 * 60 * 1000;
 let TRANSLATE_MAX_WORKERS = 3;
 const TRANSLATE_GAP_MS = 150;
@@ -58,7 +58,7 @@ let lastUpdatedAt = null;
 let cardRefreshers = []; // [{feed, reload}]
 let lowPowerMode = false;
 let autoRefreshIntervalId = null;
-let sortBy = "none";
+let sortBy = "newest";
 let showQuotes = true;
 let showTickers = true;
 
@@ -133,7 +133,7 @@ function loadAppState() {
         groupsCollapsed = res.groupsCollapsed || {};
         lowPowerMode = !!res.lowPowerMode;
         applyLowPowerMode();
-        sortBy = res.sortBy || "none";
+        sortBy = res.sortBy || "newest";
         showQuotes = res.showQuotes === undefined ? true : !!res.showQuotes;
         showTickers = res.showTickers === undefined ? true : !!res.showTickers;
         resolve();
@@ -170,13 +170,13 @@ function persistGroupsCollapsed() {
 function applyLowPowerMode() {
   if (lowPowerMode) {
     FETCH_MAX_WORKERS = 3;
-    ITEMS_PER_FEED = 2;
+    ITEMS_PER_FEED = 5;
     CACHE_TTL_MS = 15 * 60 * 1000;
     AUTO_REFRESH_MS = 30 * 60 * 1000;
     TRANSLATE_MAX_WORKERS = 1;
   } else {
     FETCH_MAX_WORKERS = 10;
-    ITEMS_PER_FEED = 5;
+    ITEMS_PER_FEED = 10;
     CACHE_TTL_MS = 5 * 60 * 1000;
     AUTO_REFRESH_MS = 12 * 60 * 1000;
     TRANSLATE_MAX_WORKERS = 3;
@@ -217,12 +217,28 @@ function timeAgo(dateStr) {
   if (isNaN(d)) return "";
   const diffMs = Date.now() - d.getTime();
   const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "همین الان";
-  if (mins < 60) return `${mins} دقیقه پیش`;
+  if (mins < 1) return "الان";
+  if (mins < 60) return `${mins}د`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} ساعت پیش`;
+  if (hrs < 24) return `${hrs}ساعت`;
   const days = Math.floor(hrs / 24);
-  return `${days} روز پیش`;
+  if (days === 1) return "دیروز";
+  if (days < 7) return `${days}روز`;
+  return "";
+}
+
+function formatPubMeta(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return "";
+  const relative = timeAgo(dateStr);
+  if (relative) return relative;
+  return d.toLocaleDateString("fa-IR", { month: "short", day: "numeric" });
+}
+
+function fullPubDate(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return "";
+  return d.toLocaleString("fa-IR", { dateStyle: "medium", timeStyle: "short" });
 }
 
 function faviconFor(url) {
@@ -374,13 +390,14 @@ function errorMessage(err) {
 }
 
 function sortItems(items) {
-  if (sortBy === "none" || items.length < 2) return items;
-  const sorted = items.slice().sort((a, b) => {
+  if (!items || items.length < 2) return items || [];
+  return items.slice().sort((a, b) => {
     const da = new Date(a.pubDate).getTime();
     const db = new Date(b.pubDate).getTime();
-    return db - da;
+    const na = isNaN(da) ? 0 : da;
+    const nb = isNaN(db) ? 0 : db;
+    return nb - na;
   });
-  return sorted;
 }
 
 function feedLatestDate(feed) {
@@ -393,8 +410,18 @@ function feedLatestDate(feed) {
 }
 
 function sortFeeds(feeds) {
-  if (sortBy !== "newest") return feeds;
+  if (sortBy === "none") return feeds;
   return feeds.slice().sort((a, b) => feedLatestDate(b) - feedLatestDate(a));
+}
+
+function sortGroups(groups) {
+  const entries = Array.from(groups.entries());
+  if (sortBy === "none") return entries;
+  return entries.sort((a, b) => {
+    const latestA = Math.max(0, ...a[1].map(feedLatestDate));
+    const latestB = Math.max(0, ...b[1].map(feedLatestDate));
+    return latestB - latestA;
+  });
 }
 
 function toggleSort() {
@@ -448,11 +475,13 @@ function itemsHtml(items) {
   return sorted
     .map((it, idx) => {
       const isRead = readLinks.has(it.link);
+      const dateLabel = formatPubMeta(it.pubDate);
+      const dateTitle = fullPubDate(it.pubDate);
       return `
       <li class="feed-item${isRead ? " read-item" : ""}" data-idx="${idx}">
         <a href="${it.link}" target="_blank" rel="noopener noreferrer" class="${isRead ? "read" : ""}" data-search="${escapeHtml(it.title.toLowerCase())}">
-          ${escapeHtml(it.title)}
-          <time>${timeAgo(it.pubDate)}</time>
+          <span class="feed-item__title">${escapeHtml(it.title)}</span>
+          ${dateLabel ? `<time datetime="${escapeHtml(it.pubDate)}" title="${escapeHtml(dateTitle)}">${escapeHtml(dateLabel)}</time>` : ""}
         </a>
         ${showFa ? `<div class="fa-translation pending" data-title="${encodeURIComponent(it.title)}">در حال ترجمه…</div>` : ""}
       </li>`;
@@ -480,7 +509,6 @@ function buildCard(feed, label) {
       <div class="feed-card__title">
         <span>${escapeHtml(label || feed.name)}</span>
       </div>
-
     </div>
     <ul class="feed-items"><li class="feed-item">در حال بارگذاری…</li></ul>
   `;
@@ -490,7 +518,10 @@ function buildCard(feed, label) {
 async function loadCardContent(feed, card, isBackground = false) {
   const list = card.querySelector(".feed-items");
   const cached = feedCache[feed.id];
-  const cacheFresh = cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS;
+  const cacheFresh =
+    cached &&
+    Date.now() - cached.fetchedAt < CACHE_TTL_MS &&
+    (cached.itemLimit || 0) >= ITEMS_PER_FEED;
 
   if (cacheFresh) {
     card.classList.remove("loading", "error");
@@ -518,7 +549,7 @@ async function loadCardContent(feed, card, isBackground = false) {
   const doFetch = async () => {
     try {
       const items = await fetchFeed(feed);
-      feedCache[feed.id] = { items, fetchedAt: Date.now() };
+      feedCache[feed.id] = { items, fetchedAt: Date.now(), itemLimit: ITEMS_PER_FEED };
       persistFeedCache();
       card.classList.remove("loading", "error");
       if (!items.length) {
@@ -591,10 +622,7 @@ async function renderAll() {
   });
 
   const sortedStandalone = sortFeeds(standalone);
-  const sortedGroups = new Map();
-  groups.forEach((members, groupName) => {
-    sortedGroups.set(groupName, sortFeeds(members));
-  });
+  const sortedGroupEntries = sortGroups(groups);
 
   sortedStandalone.forEach((feed) => {
     const card = buildCard(feed);
@@ -604,7 +632,8 @@ async function renderAll() {
     cardRefreshers.push({ feed, reload: () => loadCardContent(feed, card) });
   });
 
-  sortedGroups.forEach((members, groupName) => {
+  sortedGroupEntries.forEach(([groupName, unsortedMembers]) => {
+    const members = sortFeeds(unsortedMembers);
     const collapsed = !!groupsCollapsed[groupName];
     const wrap = document.createElement("div");
     wrap.className = "feed-group" + (collapsed ? " collapsed" : "");
@@ -884,6 +913,8 @@ if (typeof module !== "undefined" && module.exports) {
     uid,
     escapeHtml,
     timeAgo,
+    formatPubMeta,
+    fullPubDate,
     faviconFor,
     sortItems,
     sortFeeds,

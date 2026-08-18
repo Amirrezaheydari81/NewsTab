@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
 const { minify } = require("terser");
 
 const ROOT = __dirname;
@@ -38,6 +39,8 @@ function copyAssets() {
   const assets = [
     "newtab.html",
     "style.css",
+    "fonts.css",
+    "fonts.js",
     "manifest.json",
     "logo.png",
     "quotes.js",
@@ -60,8 +63,16 @@ function copyAssets() {
   }
 }
 
+function buildCss() {
+  execSync("npx @tailwindcss/cli -i ./src/input.css -o ./style.css --minify", {
+    stdio: "inherit",
+    cwd: ROOT,
+  });
+}
+
 async function build() {
   console.log("Building production bundle...");
+  buildCss();
   cleanDist();
   await minifyJs();
   copyAssets();

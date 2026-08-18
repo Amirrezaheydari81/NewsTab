@@ -1,0 +1,31 @@
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("chrome-extension://__MSG_@@extension_id__/fonts/Vazir.woff2") format("woff2"),
+    url("fonts/Vazir.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("chrome-extension://__MSG_@@extension_id__/fonts/Vazir-Medium.woff2") format("woff2"),
+    url("fonts/Vazir-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("chrome-extension://__MSG_@@extension_id__/fonts/Vazir-Bold.woff2") format("woff2"),
+    url("fonts/Vazir-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+html,
+body {
+  font-family: "Vazirmatn", "Segoe UI", Tahoma, sans-serif;
+}

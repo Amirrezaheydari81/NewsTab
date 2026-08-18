@@ -1,14 +1,18 @@
 {
   "name": "news-tab",
-  "version": "1.1.0.0",
+  "version": "1.2.0.0",
   "description": "Minimal RSS new tab extension",
   "scripts": {
-    "build": "node build.js",
-    "watch": "node build.js --watch",
+    "css": "npx @tailwindcss/cli -i ./src/input.css -o ./style.css --minify",
+    "css:watch": "npx @tailwindcss/cli -i ./src/input.css -o ./style.css --watch",
+    "build": "npm run css && node build.js",
+    "watch": "npm run css:watch",
     "test": "node test.js"
   },
   "devDependencies": {
-    "terser": "^5.39.0",
-    "jsdom": "^25.0.0"
+    "@tailwindcss/cli": "^4.3.3",
+    "jsdom": "^25.0.0",
+    "tailwindcss": "^4.3.3",
+    "terser": "^5.39.0"
   }
 }

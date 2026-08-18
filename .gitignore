@@ -1,16 +1,29 @@
+# dependencies
 node_modules/
+
+# production build
 dist/
+
+# logs and OS junk
 *.log
 .DS_Store
 Thumbs.db
+
+# editors
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+
+# secrets
 .env
 .env*.local
-package-lock.json
-test.js
+
+# coverage
 coverage/
 .nyc_output/
+
+# generated local tooling
+graphify-out/
+.cursor/

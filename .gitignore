@@ -4,26 +4,58 @@ node_modules/
 # production build
 dist/
 
-# logs and OS junk
+# logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS junk
 .DS_Store
 Thumbs.db
+Desktop.ini
+ehthumbs.db
 
-# editors
+# editors / IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
 
-# secrets
+# secrets / env
 .env
-.env*.local
+.env.*
+!.env.example
 
-# coverage
+# coverage / test artifacts
 coverage/
 .nyc_output/
+*.lcov
 
-# generated local tooling
+# local tooling / agent scratch
 graphify-out/
 .cursor/
+agent-transcripts/
+*.tmp
+*.temp
+
+# Chrome / extension packing leftovers
+*.crx
+*.pem
+*.zip
+
+# Python / temp scripts (Chrome forbids "_" names in extension root)
+_*.py
+_*.js
+_*.html
+_*.css
+_*.txt
+__pycache__/
+*.pyc
+
+# local preview / server
+.cache/
+.http-server/

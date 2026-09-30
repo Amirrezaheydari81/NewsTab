@@ -1,20 +1,21 @@
 {
   "manifest_version": 3,
   "name": "نیوز تب",
-  "version": "1.2.0.0",
+  "version": "1.2.1.0",
   "description": "New tab صفحه‌ی مینیمال با فیدهای RSS دلخواه",
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "permissions": ["storage"],
-  "host_permissions": ["https://*/*", "http://*/*"],
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*/*"
+  ],
   "icons": {
     "256": "logo.png"
   },
-  "web_accessible_resources": [
-    {
-      "resources": ["fonts/*.woff2", "fonts.css", "fonts.js"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }

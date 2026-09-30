@@ -24,7 +24,7 @@ const DEFAULT_FEEDS = [
 ];
 
 let ITEMS_PER_FEED = 10;
-let AUTO_REFRESH_MS = 12 * 60 * 1000;
+let AUTO_REFRESH_MS = 60 * 60 * 1000;
 let TRANSLATE_MAX_WORKERS = 3;
 const TRANSLATE_GAP_MS = 150;
 
@@ -46,8 +46,15 @@ const menuBtn = document.getElementById("menuBtn");
 const menuVertical = document.getElementById("menuVertical");
 const quotesBtn = document.getElementById("quotesBtn");
 const tickersBtn = document.getElementById("tickersBtn");
+const googleStatusBtn = document.getElementById("googleStatusBtn");
+const appsBtn = document.getElementById("appsBtn");
+const todosBtn = document.getElementById("todosBtn");
+const themeBtn = document.getElementById("themeBtn");
+const savedMenuBtn = document.getElementById("savedMenuBtn");
+const greetingBtn = document.getElementById("greetingBtn");
+const webSearchMenuBtn = document.getElementById("webSearchMenuBtn");
 const clearCacheBtn = document.getElementById("clearCacheBtn");
-const emergencyBtn = document.getElementById("emergencyBtn");
+const webSearchForm = document.getElementById("webSearchSection");
 
 let showFa = false;
 let translationCache = {};
@@ -61,6 +68,40 @@ let autoRefreshIntervalId = null;
 let sortBy = "newest";
 let showQuotes = true;
 let showTickers = true;
+let showGoogleStatus = true;
+let showApps = true;
+let showTodos = true;
+let showSaved = true;
+let showGreeting = true;
+let showWebSearch = true;
+let themeMode = "system";
+
+
+function isSafeHttpUrl(url) {
+  try {
+    const u = new URL(String(url || "").trim());
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function isSafeHttpsUrl(url) {
+  try {
+    const u = new URL(String(url || "").trim());
+    return u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function safeHref(url) {
+  return isSafeHttpsUrl(url) ? String(url).trim() : "#";
+}
+
+const FEED_CACHE_MAX_FEEDS = 80;
+const TRANSLATION_CACHE_SOFT = 1200;
+const TRANSLATION_CACHE_HARD = 1000;
 
 function uid() {
   return Math.random().toString(36).slice(2, 9);
@@ -73,7 +114,7 @@ function escapeHtml(str) {
 }
 /* ---------- FETCH limit ---------- */
 let FETCH_MAX_WORKERS = 10;
-let CACHE_TTL_MS = 5 * 60 * 1000;
+let CACHE_TTL_MS = 60 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 12000;
 let fetchQueue = [];
 let fetchWorkers = 0;
@@ -124,7 +165,7 @@ function saveFeeds(feeds) {
 function loadAppState() {
   return new Promise((resolve) => {
     chrome.storage.local.get(
-      ["showFa", "translationCache", "readLinks", "feedCache", "groupsCollapsed", "lowPowerMode", "sortBy", "showQuotes", "showTickers"],
+      ["showFa", "translationCache", "readLinks", "feedCache", "groupsCollapsed", "lowPowerMode", "sortBy", "showQuotes", "showTickers", "showGoogleStatus", "showApps", "showTodos", "showSaved", "showGreeting", "showWebSearch", "themeMode"],
       (res) => {
         showFa = res.showFa === undefined ? true : !!res.showFa;
         translationCache = res.translationCache || {};
@@ -136,6 +177,13 @@ function loadAppState() {
         sortBy = res.sortBy || "newest";
         showQuotes = res.showQuotes === undefined ? true : !!res.showQuotes;
         showTickers = res.showTickers === undefined ? true : !!res.showTickers;
+        showGoogleStatus = res.showGoogleStatus === undefined ? true : !!res.showGoogleStatus;
+        showApps = res.showApps === undefined ? true : !!res.showApps;
+        showTodos = res.showTodos === undefined ? true : !!res.showTodos;
+        showSaved = res.showSaved === undefined ? true : !!res.showSaved;
+        showGreeting = res.showGreeting === undefined ? true : !!res.showGreeting;
+        showWebSearch = res.showWebSearch === undefined ? true : !!res.showWebSearch;
+        themeMode = res.themeMode === "light" || res.themeMode === "dark" ? res.themeMode : "system";
         resolve();
       }
     );
@@ -144,9 +192,9 @@ function loadAppState() {
 
 function persistTranslationCache() {
   const keys = Object.keys(translationCache);
-  if (keys.length > 1500) {
+  if (keys.length > TRANSLATION_CACHE_SOFT) {
     const trimmed = {};
-    keys.slice(keys.length - 1000).forEach((k) => (trimmed[k] = translationCache[k]));
+    keys.slice(keys.length - TRANSLATION_CACHE_HARD).forEach((k) => (trimmed[k] = translationCache[k]));
     translationCache = trimmed;
   }
   chrome.storage.local.set({ translationCache });
@@ -160,6 +208,18 @@ function persistReadLinks() {
 }
 
 function persistFeedCache() {
+  const ids = Object.keys(feedCache);
+  if (ids.length > FEED_CACHE_MAX_FEEDS) {
+    const ranked = ids
+      .map((id) => ({ id, at: (feedCache[id] && feedCache[id].fetchedAt) || 0 }))
+      .sort((a, b) => b.at - a.at)
+      .slice(0, FEED_CACHE_MAX_FEEDS);
+    const next = {};
+    ranked.forEach((row) => {
+      next[row.id] = feedCache[row.id];
+    });
+    feedCache = next;
+  }
   chrome.storage.local.set({ feedCache });
 }
 
@@ -171,14 +231,14 @@ function applyLowPowerMode() {
   if (lowPowerMode) {
     FETCH_MAX_WORKERS = 3;
     ITEMS_PER_FEED = 5;
-    CACHE_TTL_MS = 15 * 60 * 1000;
-    AUTO_REFRESH_MS = 30 * 60 * 1000;
+    CACHE_TTL_MS = 2 * 60 * 60 * 1000;
+    AUTO_REFRESH_MS = 2 * 60 * 60 * 1000;
     TRANSLATE_MAX_WORKERS = 1;
   } else {
     FETCH_MAX_WORKERS = 10;
     ITEMS_PER_FEED = 10;
-    CACHE_TTL_MS = 5 * 60 * 1000;
-    AUTO_REFRESH_MS = 12 * 60 * 1000;
+    CACHE_TTL_MS = 60 * 60 * 1000;
+    AUTO_REFRESH_MS = 60 * 60 * 1000;
     TRANSLATE_MAX_WORKERS = 3;
   }
 }
@@ -200,6 +260,9 @@ function updateClock() {
     day: "numeric"
   });
   updateLastUpdatedLabel();
+  if (window.NewsTabExtras && typeof window.NewsTabExtras.updateGreeting === "function") {
+    window.NewsTabExtras.updateGreeting();
+  }
 }
 
 function updateLastUpdatedLabel() {
@@ -310,6 +373,11 @@ async function fetchFeed(feed) {
   }
 
   const promise = (async () => {
+    if (!isSafeHttpsUrl(feed.url)) {
+      const err = new Error("unsafe-url");
+      err.kind = "unsafe-url";
+      throw err;
+    }
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
@@ -455,6 +523,52 @@ function toggleTickers() {
   chrome.storage.local.set({ showTickers });
 }
 
+
+function toggleGoogleStatus() {
+  showGoogleStatus = !showGoogleStatus;
+  const section = document.getElementById("googleStatusSection");
+  if (section) {
+    section.style.display = showGoogleStatus ? "" : "none";
+  }
+  googleStatusBtn.classList.toggle("on", showGoogleStatus);
+  googleStatusBtn.classList.toggle("active", showGoogleStatus);
+  chrome.storage.local.set({ showGoogleStatus });
+  if (showGoogleStatus && typeof window.applyGoogleStatusVisibility === "function") {
+    window.applyGoogleStatusVisibility();
+  }
+}
+
+
+function syncExtrasMenuButtons() {
+  if (appsBtn) {
+    appsBtn.classList.toggle("on", showApps);
+    appsBtn.classList.toggle("active", showApps);
+  }
+  if (todosBtn) {
+    todosBtn.classList.toggle("on", showTodos);
+    todosBtn.classList.toggle("active", showTodos);
+  }
+  if (savedMenuBtn) {
+    savedMenuBtn.classList.toggle("on", showSaved);
+    savedMenuBtn.classList.toggle("active", showSaved);
+  }
+  if (greetingBtn) {
+    greetingBtn.classList.toggle("on", showGreeting);
+    greetingBtn.classList.toggle("active", showGreeting);
+  }
+  if (webSearchMenuBtn) {
+    webSearchMenuBtn.classList.toggle("on", showWebSearch);
+    webSearchMenuBtn.classList.toggle("active", showWebSearch);
+  }
+}
+
+function refreshExtrasUi() {
+  syncExtrasMenuButtons();
+  if (window.NewsTabExtras && typeof window.NewsTabExtras.applyAllVisibility === "function") {
+    window.NewsTabExtras.applyAllVisibility();
+  }
+}
+
 function toggleMenu() {
   menuVertical.classList.toggle("open");
 }
@@ -462,10 +576,12 @@ function toggleMenu() {
 function clearCache() {
   feedCache = {};
   translationCache = {};
-  readLinks = new Set();
-  groupsCollapsed = {};
-  chrome.storage.local.set({ feedCache: {}, translationCache: {}, readLinks: [], groupsCollapsed: {} });
+  chrome.storage.local.set({ feedCache: {}, translationCache: {} });
+  if (window.NewsTabBackup && typeof window.NewsTabBackup.toast === "function") {
+    window.NewsTabBackup.toast("کش موقت پاک شد — تنظیمات و ذخیره‌ها دست‌نخورده ماند");
+  }
   renderAll();
+  refreshAllCards(true);
 }
 
 /* ---------- rendering ---------- */
@@ -479,7 +595,7 @@ function itemsHtml(items) {
       const dateTitle = fullPubDate(it.pubDate);
       return `
       <li class="feed-item${isRead ? " read-item" : ""}" data-idx="${idx}">
-        <a href="${it.link}" target="_blank" rel="noopener noreferrer" class="${isRead ? "read" : ""}" data-search="${escapeHtml(it.title.toLowerCase())}">
+        <a href="${escapeHtml(safeHref(it.link))}" target="_blank" rel="noopener noreferrer" class="${isRead ? "read" : ""}" data-search="${escapeHtml(it.title.toLowerCase())}" ${safeHref(it.link) === "#" ? 'aria-disabled="true" tabindex="-1"' : ""}>
           <span class="feed-item__title">${escapeHtml(it.title)}</span>
           ${dateLabel ? `<time datetime="${escapeHtml(it.pubDate)}" title="${escapeHtml(dateTitle)}">${escapeHtml(dateLabel)}</time>` : ""}
         </a>
@@ -498,6 +614,9 @@ function wireItemClicks(list) {
       persistReadLinks();
     });
   });
+  if (window.NewsTabExtras && typeof window.NewsTabExtras.enhanceFeedList === "function") {
+    window.NewsTabExtras.enhanceFeedList(list);
+  }
 }
 
 function buildCard(feed, label) {
@@ -515,10 +634,11 @@ function buildCard(feed, label) {
   return card;
 }
 
-async function loadCardContent(feed, card, isBackground = false) {
+async function loadCardContent(feed, card, isBackground = false, force = false) {
   const list = card.querySelector(".feed-items");
   const cached = feedCache[feed.id];
   const cacheFresh =
+    !force &&
     cached &&
     Date.now() - cached.fetchedAt < CACHE_TTL_MS &&
     (cached.itemLimit || 0) >= ITEMS_PER_FEED;
@@ -599,7 +719,7 @@ function showCachedOnly(feed, card) {
     if (showFa) applyTranslations(list);
     card.style.display = "";
   } else {
-    list.innerHTML = `<li class="feed-item">برای نمایش داده، از بخش تنظیمات روی به‌روزرسانی کلیک کنید</li>`;
+    list.innerHTML = `<li class="feed-item">برای نمایش داده، از منوی ⋮ روی به‌روزرسانی کلیک کنید</li>`;
   }
 }
 
@@ -629,7 +749,7 @@ async function renderAll() {
     grid.appendChild(card);
     card._feed = feed;
     showCachedOnly(feed, card);
-    cardRefreshers.push({ feed, reload: () => loadCardContent(feed, card) });
+    cardRefreshers.push({ feed, reload: (force = false) => loadCardContent(feed, card, false, force) });
   });
 
   sortedGroupEntries.forEach(([groupName, unsortedMembers]) => {
@@ -653,7 +773,7 @@ async function renderAll() {
       body.appendChild(card);
       card._feed = feed;
       showCachedOnly(feed, card);
-      cardRefreshers.push({ feed, reload: () => loadCardContent(feed, card) });
+      cardRefreshers.push({ feed, reload: (force = false) => loadCardContent(feed, card, false, force) });
     });
   });
 
@@ -662,7 +782,7 @@ async function renderAll() {
   applySearchFilter();
 }
 
-function refreshAllCards() {
+function refreshAllCards(force = false) {
   refreshBtn.classList.add("spinning");
   const promises = [];
 
@@ -671,10 +791,10 @@ function refreshAllCards() {
     if (!feed) return;
     const existing = cardRefreshers.find((c) => c.feed.id === feed.id);
     if (existing) {
-      promises.push(existing.reload());
+      promises.push(existing.reload(force));
     } else {
-      promises.push(loadCardContent(feed, card));
-      cardRefreshers.push({ feed, reload: () => loadCardContent(feed, card) });
+      promises.push(loadCardContent(feed, card, false, force));
+      cardRefreshers.push({ feed, reload: (force = false) => loadCardContent(feed, card, false, force) });
     }
   });
 
@@ -699,6 +819,35 @@ function applySearchFilter() {
 
 searchInput.addEventListener("input", applySearchFilter);
 
+searchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    searchInput.value = "";
+    applySearchFilter();
+    searchInput.blur();
+  }
+});
+
+if (webSearchForm) {
+  webSearchForm.addEventListener("submit", (e) => {
+    if (!showWebSearch || !searchInput.value.trim()) {
+      e.preventDefault();
+      return;
+    }
+    setTimeout(() => {
+      searchInput.value = "";
+      applySearchFilter();
+    }, 0);
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  e.preventDefault();
+  searchInput.focus();
+});
+
 /* ---------- settings panel ---------- */
 
 async function renderSettingsList() {
@@ -721,9 +870,32 @@ async function renderSettingsList() {
     .join("");
 }
 
-settingsBtn.addEventListener("click", () => {
+function setSettingsTab(tab) {
+  overlay.querySelectorAll(".set-tab").forEach((btn) => {
+    const on = btn.dataset.tab === tab;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  overlay.querySelectorAll(".set-pane").forEach((pane) => {
+    pane.hidden = pane.dataset.pane !== tab;
+  });
+}
+
+function openSettings(tab) {
+  const reminder = document.getElementById("backupReminder");
+  setSettingsTab(tab || (reminder && !reminder.hidden ? "data" : "display"));
   overlay.classList.add("open");
   renderSettingsList();
+}
+
+overlay.querySelectorAll(".set-tab").forEach((btn) => {
+  btn.addEventListener("click", () => setSettingsTab(btn.dataset.tab));
+});
+
+settingsBtn.addEventListener("click", () => openSettings());
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && overlay.classList.contains("open")) overlay.classList.remove("open");
 });
 closeSettings.addEventListener("click", () => overlay.classList.remove("open"));
 overlay.addEventListener("click", (e) => {
@@ -759,6 +931,14 @@ addFeedForm.addEventListener("submit", async (e) => {
   const name = document.getElementById("feedName").value.trim();
   const url = document.getElementById("feedUrl").value.trim();
   if (!name || !url) return;
+  if (!isSafeHttpsUrl(url)) {
+    if (window.NewsTabBackup && window.NewsTabBackup.toast) {
+      window.NewsTabBackup.toast("فقط آدرس HTTPS برای فید مجاز است", "warn");
+    } else {
+      alert("فقط آدرس HTTPS برای فید مجاز است");
+    }
+    return;
+  }
   const feeds = await getFeeds();
   feeds.push({ id: uid(), name, url });
   await saveFeeds(feeds);
@@ -784,7 +964,7 @@ grid.addEventListener("click", (e) => {
       if (!feed) return;
       if (!cardRefreshers.some((c) => c.feed.id === feed.id)) {
         loadCardContent(feed, card);
-        cardRefreshers.push({ feed, reload: () => loadCardContent(feed, card) });
+        cardRefreshers.push({ feed, reload: (force = false) => loadCardContent(feed, card, false, force) });
       }
     });
   }
@@ -800,7 +980,12 @@ translateBtn.addEventListener("click", () => {
   renderAll();
 });
 
-refreshBtn.addEventListener("click", () => refreshAllCards());
+refreshBtn.addEventListener("click", () => {
+  refreshAllCards(true);
+  if (showGoogleStatus && typeof window.refreshGoogleStatus === "function") {
+    window.refreshGoogleStatus();
+  }
+});
 
 lowPowerBtn.addEventListener("click", () => {
   lowPowerMode = !lowPowerMode;
@@ -809,8 +994,8 @@ lowPowerBtn.addEventListener("click", () => {
   applyLowPowerMode();
   persistLowPowerMode();
   if (autoRefreshIntervalId) clearInterval(autoRefreshIntervalId);
-  autoRefreshIntervalId = setInterval(refreshAllCards, AUTO_REFRESH_MS);
-  refreshAllCards();
+  autoRefreshIntervalId = setInterval(() => refreshAllCards(false), AUTO_REFRESH_MS);
+  refreshAllCards(false);
 });
 
 sortBtn.addEventListener("click", toggleSort);
@@ -818,10 +1003,6 @@ sortBtn.addEventListener("click", toggleSort);
 menuBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   toggleMenu();
-});
-
-emergencyBtn.addEventListener("click", () => {
-  clearCache();
 });
 
 quotesBtn.addEventListener("click", () => {
@@ -832,14 +1013,60 @@ tickersBtn.addEventListener("click", () => {
   toggleTickers();
 });
 
+googleStatusBtn.addEventListener("click", () => {
+  toggleGoogleStatus();
+});
+
+if (appsBtn) {
+  appsBtn.addEventListener("click", () => {
+    showApps = !showApps;
+    chrome.storage.local.set({ showApps });
+    refreshExtrasUi();
+  });
+}
+if (todosBtn) {
+  todosBtn.addEventListener("click", () => {
+    showTodos = !showTodos;
+    chrome.storage.local.set({ showTodos });
+    refreshExtrasUi();
+  });
+}
+if (savedMenuBtn) {
+  savedMenuBtn.addEventListener("click", () => {
+    showSaved = !showSaved;
+    chrome.storage.local.set({ showSaved });
+    refreshExtrasUi();
+  });
+}
+if (greetingBtn) {
+  greetingBtn.addEventListener("click", () => {
+    showGreeting = !showGreeting;
+    chrome.storage.local.set({ showGreeting });
+    refreshExtrasUi();
+  });
+}
+if (webSearchMenuBtn) {
+  webSearchMenuBtn.addEventListener("click", () => {
+    showWebSearch = !showWebSearch;
+    chrome.storage.local.set({ showWebSearch });
+    refreshExtrasUi();
+  });
+}
+
+
 clearCacheBtn.addEventListener("click", () => {
+  if (!confirm("کش موقت خبرها و ترجمه‌ها پاک شود؟")) return;
   clearCache();
 });
 
 document.addEventListener("click", (e) => {
-  if (!e.target.closest(".actions")) {
+  if (!e.target.closest(".menu-wrap")) {
     menuVertical.classList.remove("open");
   }
+});
+
+menuVertical.addEventListener("click", (e) => {
+  if (e.target.closest("#settingsBtn, #refreshBtn")) menuVertical.classList.remove("open");
 });
 
 /* ---------- init ---------- */
@@ -871,8 +1098,25 @@ async function init() {
     tickerSection.style.display = showTickers ? "" : "none";
   }
 
+  googleStatusBtn.classList.toggle("on", showGoogleStatus);
+  googleStatusBtn.classList.toggle("active", showGoogleStatus);
+  if (typeof window.applyGoogleStatusVisibility === "function") {
+    window.applyGoogleStatusVisibility();
+  }
+
+  syncExtrasMenuButtons();
+  if (window.NewsTabExtras && typeof window.NewsTabExtras.loadAndInit === "function") {
+    window.NewsTabExtras.loadAndInit();
+  } else {
+    refreshExtrasUi();
+  }
+  if (window.NewsTabBackup && typeof window.NewsTabBackup.wireBackupUi === "function") {
+    window.NewsTabBackup.wireBackupUi();
+  }
+
   renderAll();
-  autoRefreshIntervalId = setInterval(refreshAllCards, AUTO_REFRESH_MS);
+  refreshAllCards(false);
+  autoRefreshIntervalId = setInterval(() => refreshAllCards(false), AUTO_REFRESH_MS);
 }
 
 if (typeof module !== "undefined" && module.exports) {
@@ -887,6 +1131,8 @@ if (typeof module !== "undefined" && module.exports) {
     set showQuotes(v) { showQuotes = v; },
     get showTickers() { return showTickers; },
     set showTickers(v) { showTickers = v; },
+    get showGoogleStatus() { return showGoogleStatus; },
+    set showGoogleStatus(v) { showGoogleStatus = v; },
     get feedCache() { return feedCache; },
     set feedCache(v) { feedCache = v; },
     get readLinks() { return readLinks; },
@@ -912,6 +1158,9 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     uid,
     escapeHtml,
+    isSafeHttpUrl,
+    isSafeHttpsUrl,
+    safeHref,
     timeAgo,
     formatPubMeta,
     fullPubDate,
@@ -929,6 +1178,7 @@ if (typeof module !== "undefined" && module.exports) {
     toggleSort,
     toggleQuotes,
     toggleTickers,
+    toggleGoogleStatus,
     toggleMenu,
     clearCache,
     persistLowPowerMode,

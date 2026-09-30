@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="fonts.css" />
     <script src="fonts.js"></script>
     <link rel="stylesheet" href="style.css" />
+    <script src="theme-init.js"></script>
   </head>
   <body>
     <div class="bg" aria-hidden="true"></div>
@@ -19,315 +20,273 @@
           <div class="brand-text">
             <div class="brand-row">
               <span class="brandname">نیوز تب</span>
-              <span class="badge">1.2.0.0</span>
+              <span class="badge">1.2.1.0</span>
             </div>
             <span class="creator">
-              <a
-                href="https://github.com/Amirrezaheydari81/"
-                target="_blank"
-                rel="noopener noreferrer"
-                >امیررضا حیدری</a
-              >
+              <a href="https://github.com/Amirrezaheydari81/" target="_blank" rel="noopener noreferrer">امیررضا حیدری</a>
             </span>
           </div>
         </div>
+
         <div class="clock-wrap">
           <div class="clock" id="clock">--:--</div>
-          <div class="date" id="date">--</div>
+          <div class="clock-sub">
+            <span class="greeting" id="greetingSection"><span id="greetingText">…</span></span>
+            <span class="date" id="date">--</span>
+          </div>
+          <div class="quote-section" id="quoteSection">
+            <div class="quote-card" id="quoteCard">
+              <div class="quote-text" id="quoteText">…</div>
+            </div>
+          </div>
         </div>
+
         <div class="actions">
-          <button class="icon-btn" id="menuBtn" data-tooltip="منو" aria-label="منو">
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
-          <button
-            class="icon-btn emergency-btn"
-            id="emergencyBtn"
-            data-tooltip="پاکسازی کش اضطراری"
-            aria-label="پاکسازی کش اضطراری"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M3 6h18" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-          </button>
-          <div class="menu-vertical" id="menuVertical">
-            <button class="menu-item" id="translateBtn" data-action="translate">
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" />
-                <path d="M2 12h20" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10" />
-              </svg>
-              <span>ترجمه فارسی</span>
+          <div class="hdr-tickers" id="tickerSection">
+            <tgju
+              type="ticker-single"
+              items="137121"
+              columns="dot"
+              token="webservice"
+              styles='{
+                "background": "#14323c",
+                "hover": "#1c4450",
+                "border": "#ffffff29",
+                "separator": "#ffffff18",
+                "data-tooltip": "#eef6f6ad",
+                "dot": "#6ec9d9",
+                "price": "#eef6f6",
+                "low": "#f09898",
+                "high": "#6ec9d9",
+                "copyright": "#eef6f652",
+                "copyright_fix": "#14323c",
+                "copyright_fix_text": "#eef6f6ad"
+              }'
+            ></tgju>
+            <tgju
+              type="ticker-single"
+              items="137203"
+              columns="dot"
+              token="webservice"
+              styles='{
+                "background": "#14323c",
+                "hover": "#1c4450",
+                "border": "#ffffff29",
+                "separator": "#ffffff18",
+                "data-tooltip": "#eef6f6ad",
+                "dot": "#6ec9d9",
+                "price": "#eef6f6",
+                "low": "#f09898",
+                "high": "#6ec9d9",
+                "copyright": "#eef6f652",
+                "copyright_fix": "#14323c",
+                "copyright_fix_text": "#eef6f6ad"
+              }'
+            ></tgju>
+          </div>
+
+          <div class="hdr-buttons">
+            <section class="hdr-pop" id="todosSection">
+              <button type="button" class="icon-btn hdr-pop__btn" id="todosOpenBtn" aria-expanded="false" aria-controls="todosPanel" data-tooltip="کارهای امروز" aria-label="کارهای امروز">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <span class="icon-badge" id="todosBadge" hidden></span>
+              </button>
+              <div class="hdr-pop__panel todos-panel" id="todosPanel" hidden>
+                <div class="todos-head">
+                  <h2>کارهای امروز</h2>
+                  <span class="todos-meta" id="todosMeta"></span>
+                </div>
+                <form class="todo-form" id="todoForm">
+                  <input type="text" id="todoInput" class="todo-input" placeholder="کار جدید…" maxlength="120" autocomplete="off" />
+                  <button type="submit">افزودن</button>
+                </form>
+                <ul class="todos-list" id="todosList"></ul>
+              </div>
+            </section>
+
+            <section class="hdr-pop" id="appsSection">
+              <button type="button" class="icon-btn hdr-pop__btn" id="appsToggleBtn" aria-expanded="false" aria-controls="appsPanel" data-tooltip="میانبرها" aria-label="میانبرها">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>
+              </button>
+              <div class="hdr-pop__panel apps-panel" id="appsPanel" hidden>
+                <div class="apps-list" id="appsList"></div>
+              </div>
+            </section>
+
+            <button type="button" class="icon-btn" id="savedOpenBtn" data-tooltip="ذخیره‌ها" aria-label="خبرهای ذخیره‌شده">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>
+              <span class="icon-badge" id="savedCount">0</span>
             </button>
-            <button class="menu-item" id="refreshBtn" data-action="refresh">
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M21 2v6h-6" />
-                <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
-                <path d="M3 22v-6h6" />
-                <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
-              </svg>
-              <span>به‌روزرسانی</span>
-            </button>
-            <button class="menu-item" id="lowPowerBtn" data-action="lowpower">
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect x="2" y="7" width="16" height="10" rx="2" ry="2" />
-                <line x1="22" y1="11" x2="22" y2="13" />
-                <line x1="6" y1="10" x2="6" y2="14" />
-                <line x1="10" y1="10" x2="10" y2="14" />
-              </svg>
-              <span>حالت کم‌مصرف</span>
-            </button>
-            <button class="menu-item" id="sortBtn" data-action="sort">
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M3 6h18" />
-                <path d="M7 12h10" />
-                <path d="M11 18h2" />
-              </svg>
-              <span>مرتب‌سازی</span>
-            </button>
-            <button class="menu-item" id="quotesBtn" data-action="quotes">
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 1 1 2v1c0 1-1 2-2 2s-1 .008-1 1.031V21z"
-                />
-                <path
-                  d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"
-                />
-              </svg>
-              <span>نقل قول</span>
-            </button>
-            <button class="menu-item" id="tickersBtn" data-action="tickers">
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M12 2v20M2 12h20" />
-              </svg>
-              <span>قیمت‌ها</span>
-            </button>
-            <button class="menu-item" id="settingsBtn" data-action="settings">
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="12" cy="12" r="3" />
-                <path
-                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0 1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0 1.51 1z"
-                />
-              </svg>
-              <span>تنظیمات فید</span>
-            </button>
-            <button
-              class="menu-item menu-item--danger"
-              id="clearCacheBtn"
-              data-action="clearCache"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M3 6h18" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-              <span>پاکسازی کش</span>
-            </button>
+
+            <div class="menu-wrap">
+              <button type="button" class="icon-btn" id="menuBtn" aria-label="منو" aria-haspopup="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+              </button>
+              <div class="menu-vertical" id="menuVertical">
+                <button class="menu-item" id="refreshBtn" data-action="refresh">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                  <span class="menu-item__label">به‌روزرسانی<small class="last-updated" id="lastUpdated"></small></span>
+                </button>
+                <button class="menu-item" id="translateBtn" data-action="translate">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg>
+                  <span>ترجمه فارسی</span>
+                </button>
+                <button class="menu-item" id="themeBtn" data-action="theme">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+                  <span>پوسته: سیستم</span>
+                </button>
+                <div class="menu-sep" role="separator"></div>
+                <button class="menu-item" id="settingsBtn" data-action="settings">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+                  <span>تنظیمات</span>
+                  <span class="menu-dot" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
-      <div class="ticker-section" id="tickerSection">
-        <tgju
-          type="ticker-single"
-          items="137121"
-          columns="dot"
-          token="webservice"
-          styles='{
-            "background": "#14323c",
-            "hover": "#1c4450",
-            "border": "#ffffff29",
-            "separator": "#ffffff18",
-            "data-tooltip": "#eef6f6ad",
-            "dot": "#6ec9d9",
-            "price": "#eef6f6",
-            "low": "#f09898",
-            "high": "#6ec9d9",
-            "copyright": "#eef6f652",
-            "copyright_fix": "#14323c",
-            "copyright_fix_text": "#eef6f6ad"
-          }'
-        ></tgju>
-        <tgju
-          type="ticker-single"
-          items="137203"
-          columns="dot"
-          token="webservice"
-          styles='{
-            "background": "#14323c",
-            "hover": "#1c4450",
-            "border": "#ffffff29",
-            "separator": "#ffffff18",
-            "data-tooltip": "#eef6f6ad",
-            "dot": "#6ec9d9",
-            "price": "#eef6f6",
-            "low": "#f09898",
-            "high": "#6ec9d9",
-            "copyright": "#eef6f652",
-            "copyright_fix": "#14323c",
-            "copyright_fix_text": "#eef6f6ad"
-          }'
-        ></tgju>
-      </div>
+      <div class="command-row">
+        <form class="web-search" id="webSearchSection" action="https://www.google.com/search" method="get" target="_blank">
+          <input type="hidden" name="hl" value="fa" />
+          <label class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <input type="search" name="q" id="searchInput" class="search-input" placeholder="فیلتر تیترها…" autocomplete="off" />
+            <kbd class="search-hint" id="searchHint">Enter ↵ گوگل</kbd>
+          </label>
+        </form>
 
-      <div class="quote-section" id="quoteSection">
-        <div class="quote-card" id="quoteCard">
-          <div class="quote-text" id="quoteText">در حال بارگذاری نقل قول...</div>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <label class="search-wrap">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
-          <input
-            type="text"
-            id="searchInput"
-            class="search-input"
-            placeholder="جستجو در تیترها"
-            autocomplete="off"
-          />
-        </label>
-        <span class="last-updated" id="lastUpdated"></span>
+        <section class="google-status-section" id="googleStatusSection" aria-label="وضعیت گوگل">
+          <div class="google-status-rail">
+            <div class="google-status-label">
+              <span class="google-status-mark" aria-hidden="true"></span>
+              <span>وضعیت گوگل</span>
+            </div>
+            <div class="google-status-track">
+              <button type="button" class="google-status-nav" id="googleStatusNavRight" aria-label="اسکرول به راست">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
+              </button>
+              <div class="google-status-scroller" id="googleStatusList" tabindex="0" dir="rtl">
+                <div class="google-status-empty google-status-empty--chip">در حال دریافت…</div>
+              </div>
+              <button type="button" class="google-status-nav" id="googleStatusNavLeft" aria-label="اسکرول به چپ">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
+              </button>
+            </div>
+          </div>
+        </section>
       </div>
 
       <main class="feeds-grid" id="feedsGrid"></main>
     </div>
 
-    <div class="overlay" id="overlay">
-      <div class="panel">
+    <div class="overlay google-status-overlay" id="googleStatusOverlay" aria-hidden="true">
+      <div class="panel google-status-panel" role="dialog" aria-modal="true" aria-labelledby="googleStatusModalTitle">
         <div class="panel-head">
-          <h2>مدیریت فیدها</h2>
+          <h2 id="googleStatusModalTitle">جزئیات وضعیت گوگل</h2>
+          <button class="icon-btn" id="googleStatusModalClose" aria-label="بستن">✕</button>
+        </div>
+        <div class="google-status-modal-body" id="googleStatusModalBody"></div>
+      </div>
+    </div>
+
+    <div class="overlay" id="savedOverlay" aria-hidden="true">
+      <div class="panel saved-panel" role="dialog" aria-modal="true">
+        <div class="panel-head">
+          <h2>خبرهای ذخیره‌شده</h2>
+          <button class="icon-btn" id="savedCloseBtn" aria-label="بستن">✕</button>
+        </div>
+        <div class="saved-list" id="savedList"></div>
+      </div>
+    </div>
+
+    <div class="overlay" id="overlay">
+      <div class="panel settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="panel-head">
+          <h2 id="settingsTitle">تنظیمات</h2>
           <button class="icon-btn" id="closeSettings" aria-label="بستن">✕</button>
         </div>
 
-        <div class="feed-list" id="feedList"></div>
+        <div class="set-tabs" role="tablist">
+          <button type="button" class="set-tab" role="tab" data-tab="display">نمایش</button>
+          <button type="button" class="set-tab" role="tab" data-tab="feeds">فیدها</button>
+          <button type="button" class="set-tab" role="tab" data-tab="data">داده و پشتیبان<span class="menu-dot" aria-hidden="true"></span></button>
+        </div>
 
-        <form class="add-feed" id="addFeedForm">
-          <input
-            type="text"
-            id="feedName"
-            placeholder="اسم فید (مثلاً تک‌کرانچ)"
-            required
-          />
-          <input
-            type="url"
-            id="feedUrl"
-            placeholder="https://example.com/feed"
-            required
-            dir="ltr"
-          />
-          <button type="submit">افزودن فید</button>
-        </form>
+        <div class="set-pane" data-pane="display">
+          <div class="set-group">
+            <div class="set-group__title">پوسته</div>
+            <div class="segmented" id="themeSegmented">
+              <button type="button" data-theme-set="system">سیستم</button>
+              <button type="button" data-theme-set="light">روشن</button>
+              <button type="button" data-theme-set="dark">تیره</button>
+            </div>
+          </div>
+          <div class="set-group">
+            <div class="set-group__title">بخش‌های صفحه</div>
+            <button type="button" class="set-row" id="greetingBtn"><span>خوشامدگویی</span><i class="switch"></i></button>
+            <button type="button" class="set-row" id="quotesBtn"><span>جمله انگیزشی</span><i class="switch"></i></button>
+            <button type="button" class="set-row" id="tickersBtn"><span>قیمت دلار و طلا</span><i class="switch"></i></button>
+            <button type="button" class="set-row" id="googleStatusBtn"><span>وضعیت جستجوی گوگل</span><i class="switch"></i></button>
+            <button type="button" class="set-row" id="webSearchMenuBtn"><span>جستجوی گوگل با Enter</span><i class="switch"></i></button>
+            <button type="button" class="set-row" id="todosBtn"><span>کارهای روزانه</span><i class="switch"></i></button>
+            <button type="button" class="set-row" id="appsBtn"><span>میانبرها</span><i class="switch"></i></button>
+            <button type="button" class="set-row" id="savedMenuBtn"><span>ذخیره خبرها</span><i class="switch"></i></button>
+          </div>
+          <div class="set-group">
+            <div class="set-group__title">خبرها</div>
+            <button type="button" class="set-row" id="sortBtn"><span>مرتب‌سازی بر اساس جدیدترین</span><i class="switch"></i></button>
+            <button type="button" class="set-row" id="lowPowerBtn"><span>حالت کم‌مصرف (به‌روزرسانی هر ۲ ساعت)</span><i class="switch"></i></button>
+          </div>
+        </div>
+
+        <div class="set-pane" data-pane="feeds" hidden>
+          <div class="feed-list" id="feedList"></div>
+          <form class="add-feed" id="addFeedForm">
+            <input type="text" id="feedName" placeholder="اسم فید (مثلاً تک‌کرانچ)" required />
+            <input type="url" id="feedUrl" placeholder="https://example.com/feed (فقط HTTPS)" required dir="ltr" />
+            <button type="submit">افزودن فید</button>
+          </form>
+        </div>
+
+        <div class="set-pane" data-pane="data" hidden>
+          <div class="backup-reminder" id="backupReminder" hidden>
+            <span>بیش از ۲ هفته از آخرین پشتیبان گذشته. برای از دست ندادن کارها و ذخیره‌ها بکاپ بگیرید.</span>
+            <div class="backup-reminder__actions">
+              <button type="button" id="backupRemindExport">ذخیره پشتیبان</button>
+              <button type="button" id="backupRemindDismiss">بعداً</button>
+            </div>
+          </div>
+          <div class="set-group">
+            <div class="set-group__title">پشتیبان</div>
+            <p class="set-note">فیدها، تنظیمات، کارها و خبرهای ذخیره‌شده در یک فایل JSON ذخیره می‌شوند. رمز اختیاری است و فایل را رمزنگاری می‌کند.</p>
+            <input type="password" id="backupPassword" class="set-input" placeholder="رمز اختیاری بکاپ" autocomplete="new-password" />
+            <input type="file" id="backupFileInput" accept="application/json,.json" hidden />
+            <div class="set-actions">
+              <button type="button" class="set-btn set-btn--primary" id="backupExportBtn">خروجی پشتیبان</button>
+              <button type="button" class="set-btn" id="backupImportBtn">بازیابی از فایل</button>
+            </div>
+          </div>
+          <div class="set-group">
+            <div class="set-group__title">کش</div>
+            <p class="set-note">فقط خبرها و ترجمه‌های موقت پاک می‌شوند؛ تنظیمات و ذخیره‌ها دست‌نخورده می‌مانند.</p>
+            <div class="set-actions">
+              <button type="button" class="set-btn set-btn--danger" id="clearCacheBtn">پاکسازی کش موقت</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+
     <script src="tgju-v2.js" defer></script>
     <script src="app.js"></script>
     <script src="quotes.js"></script>
+    <script src="google-status.js"></script>
+    <script src="extras.js"></script>
+    <script src="backup.js"></script>
   </body>
 </html>

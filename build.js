@@ -18,7 +18,7 @@ function copyFile(src, dest) {
 }
 
 async function minifyJs() {
-  const files = ["app.js", "quotes.js", "tgju-v2.js"];
+  const files = ["app.js", "quotes.js", "google-status.js", "extras.js", "backup.js", "tgju-v2.js", "theme-init.js"];
   for (const file of files) {
     const input = path.join(ROOT, file);
     const output = path.join(DIST, file);
@@ -44,6 +44,10 @@ function copyAssets() {
     "manifest.json",
     "logo.png",
     "quotes.js",
+    "google-status.js",
+    "extras.js",
+    "backup.js",
+    "theme-init.js",
     "tgju-v2.js",
   ];
 

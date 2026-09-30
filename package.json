@@ -1,6 +1,6 @@
 {
   "name": "news-tab",
-  "version": "1.2.0.0",
+  "version": "1.2.1.0",
   "description": "Minimal RSS new tab extension",
   "scripts": {
     "css": "npx @tailwindcss/cli -i ./src/input.css -o ./style.css --minify",
